@@ -10,15 +10,20 @@ class ArmyRankingApp {
 
     constructor(general: Officer) {
         this.#general = general;
+        this.#rootElement = this.#renderRoot()
 
+        // Render the army
+        this.#renderChildElements(this.#general, this.#rootElement)
+    }
+
+    #renderRoot() {
         // Create the root army element
         const root = document.getElementById('root')
         const fragment = document.createDocumentFragment();
         const rootEl = fragment
             .appendChild(document.createElement("section"))
             .appendChild(document.createElement("ul"))
-            .appendChild(document.createElement("li"));
-        rootEl.textContent = this.#general.name;
+            .appendChild(document.createElement("li"))
         rootEl.id = String(this.#general.id)
 
         if (!root) {
@@ -33,20 +38,19 @@ class ArmyRankingApp {
             throw new Error('No element!')
         }
 
+        const btn = document.createElement("button")
+        btn.innerText = this.#general.name
+        element.appendChild(btn)
+
         this.#rootElement = element
 
         const button = document.getElementById('button')
         button && button.addEventListener('click', () => {
-            let child = element.lastElementChild;
-            while (child) {
-                element.removeChild(child);
-                child = element.lastElementChild;
-            }
+            root.innerHTML = '';
             this.moveOfficer(789, 222)
         })
 
-        // Render the army
-        this.#render(this.#general, element)
+        return element
     }
 
     moveOfficer(officerID: number, managerID: number) {
@@ -66,7 +70,8 @@ class ArmyRankingApp {
 
         this.#insertA(this.#general, A, managerID)
 
-        this.#render(this.#general, this.#rootElement)
+        this.#renderRoot()
+        this.#renderChildElements(this.#general, this.#rootElement)
     }
 
     #extractA(officer: Officer, officerID: number): Officer | undefined {
@@ -120,17 +125,19 @@ class ArmyRankingApp {
         return false;
     }
 
-    #render(officer: Officer, element: HTMLElement) {
+    #renderChildElements(officer: Officer, element: HTMLElement) {
         const list = document.createElement("ul")
         element.appendChild(list)
 
         for (let i = 0; i < officer.subordinates.length; i++) {
             const li = document.createElement('li')
-            li.textContent = officer.subordinates[i].name
+            const btn = document.createElement("button")
+            btn.innerText = officer.subordinates[i].name
+            li.appendChild(btn)
             list.appendChild(li)
 
             if (officer.subordinates[i].subordinates.length) {
-                this.#render(officer.subordinates[i], li)
+                this.#renderChildElements(officer.subordinates[i], li)
             }
         }
     }

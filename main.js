@@ -10,42 +10,16 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _ArmyRankingApp_instances, _ArmyRankingApp_general, _ArmyRankingApp_rootElement, _ArmyRankingApp_extractA, _ArmyRankingApp_insertA, _ArmyRankingApp_render;
+var _ArmyRankingApp_instances, _ArmyRankingApp_general, _ArmyRankingApp_rootElement, _ArmyRankingApp_renderRoot, _ArmyRankingApp_extractA, _ArmyRankingApp_insertA, _ArmyRankingApp_renderChildElements;
 class ArmyRankingApp {
     constructor(general) {
         _ArmyRankingApp_instances.add(this);
         _ArmyRankingApp_general.set(this, void 0);
         _ArmyRankingApp_rootElement.set(this, void 0);
         __classPrivateFieldSet(this, _ArmyRankingApp_general, general, "f");
-        // Create the root army element
-        const root = document.getElementById('root');
-        const fragment = document.createDocumentFragment();
-        const rootEl = fragment
-            .appendChild(document.createElement("section"))
-            .appendChild(document.createElement("ul"))
-            .appendChild(document.createElement("li"));
-        rootEl.textContent = __classPrivateFieldGet(this, _ArmyRankingApp_general, "f").name;
-        rootEl.id = String(__classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id);
-        if (!root) {
-            throw new Error('No root element!');
-        }
-        root.appendChild(fragment);
-        const element = document.getElementById(String(__classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id));
-        if (!element) {
-            throw new Error('No element!');
-        }
-        __classPrivateFieldSet(this, _ArmyRankingApp_rootElement, element, "f");
-        const button = document.getElementById('button');
-        button && button.addEventListener('click', () => {
-            let child = element.lastElementChild;
-            while (child) {
-                element.removeChild(child);
-                child = element.lastElementChild;
-            }
-            this.moveOfficer(789, 222);
-        });
+        __classPrivateFieldSet(this, _ArmyRankingApp_rootElement, __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderRoot).call(this), "f");
         // Render the army
-        __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_render).call(this, __classPrivateFieldGet(this, _ArmyRankingApp_general, "f"), element);
+        __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderChildElements).call(this, __classPrivateFieldGet(this, _ArmyRankingApp_general, "f"), __classPrivateFieldGet(this, _ArmyRankingApp_rootElement, "f"));
     }
     moveOfficer(officerID, managerID) {
         if (officerID == __classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id) {
@@ -59,10 +33,38 @@ class ArmyRankingApp {
             throw new Error(`officerId ${officerID} not found!`);
         }
         __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_insertA).call(this, __classPrivateFieldGet(this, _ArmyRankingApp_general, "f"), A, managerID);
-        __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_render).call(this, __classPrivateFieldGet(this, _ArmyRankingApp_general, "f"), __classPrivateFieldGet(this, _ArmyRankingApp_rootElement, "f"));
+        __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderRoot).call(this);
+        __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderChildElements).call(this, __classPrivateFieldGet(this, _ArmyRankingApp_general, "f"), __classPrivateFieldGet(this, _ArmyRankingApp_rootElement, "f"));
     }
 }
-_ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakMap(), _ArmyRankingApp_instances = new WeakSet(), _ArmyRankingApp_extractA = function _ArmyRankingApp_extractA(officer, officerID) {
+_ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakMap(), _ArmyRankingApp_instances = new WeakSet(), _ArmyRankingApp_renderRoot = function _ArmyRankingApp_renderRoot() {
+    // Create the root army element
+    const root = document.getElementById('root');
+    const fragment = document.createDocumentFragment();
+    const rootEl = fragment
+        .appendChild(document.createElement("section"))
+        .appendChild(document.createElement("ul"))
+        .appendChild(document.createElement("li"));
+    rootEl.id = String(__classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id);
+    if (!root) {
+        throw new Error('No root element!');
+    }
+    root.appendChild(fragment);
+    const element = document.getElementById(String(__classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id));
+    if (!element) {
+        throw new Error('No element!');
+    }
+    const btn = document.createElement("button");
+    btn.innerText = __classPrivateFieldGet(this, _ArmyRankingApp_general, "f").name;
+    element.appendChild(btn);
+    __classPrivateFieldSet(this, _ArmyRankingApp_rootElement, element, "f");
+    const button = document.getElementById('button');
+    button && button.addEventListener('click', () => {
+        root.innerHTML = '';
+        this.moveOfficer(789, 222);
+    });
+    return element;
+}, _ArmyRankingApp_extractA = function _ArmyRankingApp_extractA(officer, officerID) {
     for (let i = 0; i < officer.subordinates.length; i++) {
         if (officer.subordinates[i].id === officerID) {
             const A = officer.subordinates[i];
@@ -100,15 +102,17 @@ _ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakM
         }
     }
     return false;
-}, _ArmyRankingApp_render = function _ArmyRankingApp_render(officer, element) {
+}, _ArmyRankingApp_renderChildElements = function _ArmyRankingApp_renderChildElements(officer, element) {
     const list = document.createElement("ul");
     element.appendChild(list);
     for (let i = 0; i < officer.subordinates.length; i++) {
         const li = document.createElement('li');
-        li.textContent = officer.subordinates[i].name;
+        const btn = document.createElement("button");
+        btn.innerText = officer.subordinates[i].name;
+        li.appendChild(btn);
         list.appendChild(li);
         if (officer.subordinates[i].subordinates.length) {
-            __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_render).call(this, officer.subordinates[i], li);
+            __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderChildElements).call(this, officer.subordinates[i], li);
         }
     }
 };
