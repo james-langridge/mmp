@@ -6,80 +6,143 @@ type Officer = {
 
 class ArmyRankingApp {
     #general: Officer
-    #rootElement: HTMLElement
+    #rootElement?: HTMLElement
+    #officerID?: number
+    #oldManagerID?: number
+    #newManagerID?: number
+    #subordinates?: Officer[]
+    #isASelected: boolean
 
     constructor(general: Officer) {
         this.#general = general;
-        this.#rootElement = this.#renderRoot()
+        this.#isASelected = false
+        this.#render()
 
-        // Render the army
-        this.#renderChildElements(this.#general, this.#rootElement)
+        // Create the buttons
+        const testBtn = document.getElementById('moveBtn')
+        testBtn && testBtn.addEventListener('click', () => {
+            this.moveOfficer(this.#officerID, this.#newManagerID)
+            this.#render()
+        })
+
+        const undoBtn = document.getElementById('undoBtn')
+        undoBtn && undoBtn.addEventListener('click', () => {
+            this.#undo()
+            this.#render()
+        })
+
+        const redoBtn = document.getElementById('redoBtn')
+        redoBtn && redoBtn.addEventListener('click', () => {
+            this.#redo()
+            this.#render()
+        })
+
     }
 
-    #renderRoot() {
-        // Create the root army element
-        const root = document.getElementById('root')
+    #undo() {
+        // Move officer back to previous manager
+        this.moveOfficer(this.#officerID, this.#oldManagerID, true)
+        // Move previous subordinates back under officer
+        this.#subordinates?.forEach(subordinate => {
+            this.moveOfficer(subordinate.id, this.#officerID, true)
+        })
+    }
+
+    #redo() {
+        this.moveOfficer(this.#officerID, this.#newManagerID, true)
+    }
+
+    #render() {
+        const main = document.createElement("div")
+        main.id = 'main'
+
+        // Create one event listener for clicks on the officer buttons
+        main.addEventListener('click', (event) => {
+            const target = event.target as HTMLElement;
+            if (target.classList.contains('button')) {
+                if (!this.#isASelected) {
+                    const selectedElements = document.querySelectorAll('.selected');
+                    selectedElements.forEach(element => {
+                        element.classList.remove('selected');
+                    });
+
+                    this.#officerID = Number(target.id)
+                    target.classList.add('selected')
+                    this.#isASelected = true
+                } else {
+                    this.#newManagerID = Number(target.id)
+                    target.classList.add('selected')
+                    this.#isASelected = false
+                }
+            } else {
+                this.#isASelected = false
+                const selectedElements = document.querySelectorAll('.selected');
+                selectedElements.forEach(element => {
+                    element.classList.remove('selected');
+                });
+            }
+        });
+
         const fragment = document.createDocumentFragment();
         const rootEl = fragment
+            .appendChild(main)
             .appendChild(document.createElement("section"))
             .appendChild(document.createElement("ul"))
             .appendChild(document.createElement("li"))
+
         rootEl.id = String(this.#general.id)
+
+        const root = document.getElementById('root')
 
         if (!root) {
             throw new Error('No root element!')
         }
 
+        // Clear the root, which includes the child div with the click event listener
+        root.innerHTML = '';
+        // Re-append everything
         root.appendChild(fragment);
-
-        const element = document.getElementById(String(this.#general.id))
-
-        if (!element) {
-            throw new Error('No element!')
-        }
 
         const btn = document.createElement("button")
         btn.innerText = this.#general.name
-        element.appendChild(btn)
+        rootEl.appendChild(btn)
 
-        this.#rootElement = element
+        this.#rootElement = rootEl
 
-        const button = document.getElementById('button')
-        button && button.addEventListener('click', () => {
-            root.innerHTML = '';
-            this.moveOfficer(789, 222)
-        })
-
-        return element
+        this.#renderChildElements(this.#general, this.#rootElement)
     }
 
-    moveOfficer(officerID: number, managerID: number) {
+    moveOfficer(officerID?: number, managerID?: number, isUndo: boolean = false) {
+        if (!officerID || !managerID) {
+            throw new Error('Missing ID')
+        }
         if (officerID == this.#general.id) {
             throw new Error('Insubordination!  You cannot remove the general!')
         }
-
         if (officerID === managerID) {
             throw new Error('officerID must be different to managerID')
         }
 
-        const A = this.#extractA(this.#general, officerID)
+        const A = this.#extractA(this.#general, officerID, isUndo)
 
         if (!A) {
             throw new Error(`officerId ${officerID} not found!`)
         }
 
         this.#insertA(this.#general, A, managerID)
-
-        this.#renderRoot()
-        this.#renderChildElements(this.#general, this.#rootElement)
     }
 
-    #extractA(officer: Officer, officerID: number): Officer | undefined {
+    #extractA(officer: Officer, officerID: number, isUndo: boolean = false): Officer | undefined {
         for (let i = 0; i < officer.subordinates.length; i++) {
             if (officer.subordinates[i].id === officerID) {
                 const A = officer.subordinates[i]
                 const managerOfA = officer
+                this.#oldManagerID = officer.id
                 const subordinatesOfA = [...A.subordinates]
+                // Updating this.#subordinates interferes with un/re-do logic
+                if (!isUndo) {
+                    this.#subordinates = subordinatesOfA
+                }
                 const aWithoutSubordinates = {
                     id: A.id,
                     name: A.name,
@@ -94,7 +157,7 @@ class ArmyRankingApp {
                 return aWithoutSubordinates
             }
 
-            const result = this.#extractA(officer.subordinates[i], officerID);
+            const result = this.#extractA(officer.subordinates[i], officerID, isUndo);
             if (result !== undefined) {
                 return result;
             }
@@ -125,14 +188,21 @@ class ArmyRankingApp {
         return false;
     }
 
-    #renderChildElements(officer: Officer, element: HTMLElement) {
+    #renderChildElements(officer: Officer, element?: HTMLElement) {
+        if (!element) {
+            throw new Error('No element to append children to')
+        }
+
         const list = document.createElement("ul")
         element.appendChild(list)
 
         for (let i = 0; i < officer.subordinates.length; i++) {
             const li = document.createElement('li')
             const btn = document.createElement("button")
+            btn.id = String(officer.subordinates[i].id)
             btn.innerText = officer.subordinates[i].name
+            btn.className = 'button'
+
             li.appendChild(btn)
             list.appendChild(li)
 
