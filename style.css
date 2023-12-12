@@ -2,10 +2,6 @@ ul {
     list-style-type: none;
 }
 
-.selected {
-    background-color: darkgreen;
-}
-
 body {
     margin: 0;
     padding: 0;
@@ -27,14 +23,57 @@ h1 {
     margin-top: 0;
 }
 
-button {
-    margin: 10px;
+:root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --radius: 0.5rem;
+}
+
+.officer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    background-color: transparent;
+    color: hsl(var(--foreground));
+
+    &:hover {
+        background-color: hsl(var(--accent));
+        color: hsl(var(--accent-foreground));
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px hsl(var(--accent));
+    }
+
+    &:disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+}
+
+.officer.selected {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border: none;
 }
 
 #root {
     flex-grow: 1;
     width: 100%;
-    background-color: #f0f0f0;
     display: flex;
     flex-direction: column;
 }
@@ -43,11 +82,42 @@ button {
     flex-grow: 1;
     width: 100%;
     height: 100%;
-    background-color: #f0f0f0;
     display: flex;
     justify-content: center;
 }
 
 .buttons {
     display: flex;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    background-color: transparent;
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--input));
+
+    &:hover {
+        background-color: hsl(var(--accent));
+        color: hsl(var(--accent-foreground));
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px hsl(var(--accent));
+    }
+
+    &:disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
 }
