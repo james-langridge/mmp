@@ -13,15 +13,14 @@ type Move = {
 type MoveType = 'move' | 'undo' | 'redo'
 
 class ArmyRankingApp {
-  #general: Officer
+  #general?: Officer
   #rootElement?: HTMLElement
   #officerID?: number
   #newManagerID?: number
   #prevMoves: (Move | null)[] = [null]
   #moveIndex: number = 0
 
-  constructor(general: Officer) {
-    this.#general = general
+  constructor() {
     this.#createButtonEventListeners()
     this.#renderArmy()
   }
@@ -66,6 +65,10 @@ class ArmyRankingApp {
     managerID?: number,
     moveType: MoveType = 'move',
   ) {
+    if (!this.#general) {
+      return {success: false}
+    }
+
     if (!officerID || !managerID) {
       this.#officerID = undefined
       this.#newManagerID = undefined
@@ -121,8 +124,12 @@ class ArmyRankingApp {
   #extractOfficer(
     officerID: number,
     moveType: MoveType = 'move',
-    officer: Officer = this.#general,
+    officer: Officer | undefined = this.#general,
   ): Officer | undefined {
+    if (!officer || !this.#general) {
+      return undefined
+    }
+
     // Find the officer in the army by id
     for (let i = 0; i < officer.subordinates.length; i++) {
       if (officer.subordinates[i].id === officerID) {
@@ -185,8 +192,11 @@ class ArmyRankingApp {
   #insertOfficer(
     A: Officer,
     managerID: number,
-    officer: Officer = this.#general,
+    officer: Officer | undefined = this.#general,
   ): boolean {
+    if (!officer) {
+      return false
+    }
     // No need to search if target manager is the general
     if (managerID === officer.id) {
       officer.subordinates.push(A)
@@ -211,10 +221,27 @@ class ArmyRankingApp {
   }
 
   #renderArmy() {
-    const main = document.createElement('div')
-    main.id = 'main'
+    const root = document.getElementById('root')
+
+    if (!root) {
+      throw new Error('No root element!')
+    }
+
     const A = document.getElementById('A') as HTMLElement
     const B = document.getElementById('B') as HTMLElement
+
+    if (!this.#general) {
+      root.innerHTML = ''
+      A.textContent = 'Officer'
+      B.textContent = 'Manager'
+      this.#prevMoves = [null]
+      this.#moveIndex = 0
+
+      return
+    }
+
+    const main = document.createElement('div')
+    main.id = 'main'
 
     // Create one event listener for clicks on the officer buttons
     main.addEventListener('click', event => {
@@ -256,12 +283,6 @@ class ArmyRankingApp {
       .appendChild(document.createElement('li'))
 
     rootEl.id = String(this.#general.id)
-
-    const root = document.getElementById('root')
-
-    if (!root) {
-      throw new Error('No root element!')
-    }
 
     // Clear the root, which includes the child div with the click event listener
     root.innerHTML = ''
@@ -333,137 +354,42 @@ class ArmyRankingApp {
       this.#redo()
       this.#renderArmy()
     })
+
+    const displayArmyBtn = document.getElementById(
+      'display-army',
+    ) as HTMLButtonElement
+    displayArmyBtn.addEventListener('click', () => {
+      const inputText = document.getElementById(
+        'army-input',
+      ) as HTMLTextAreaElement
+
+      this.#general = JSON.parse(inputText.value)
+      this.#renderArmy()
+    })
+
+    const demoArmyBtn = document.getElementById(
+      'demo-army',
+    ) as HTMLButtonElement
+    demoArmyBtn.addEventListener('click', () => {
+      fetch('army-data.json')
+        .then(response => response.json())
+        .then(data => {
+          this.#general = data
+          this.#renderArmy()
+        })
+        .catch(error => console.error('Error:', error))
+    })
+
+    const resetBtn = document.getElementById('reset') as HTMLButtonElement
+    resetBtn.addEventListener('click', () => {
+      const inputText = document.getElementById(
+        'army-input',
+      ) as HTMLTextAreaElement
+      inputText.value = ''
+      this.#general = undefined
+      this.#renderArmy()
+    })
   }
 }
 
-const general: Officer = {
-  id: 4414403118104576,
-  name: 'Runte',
-  subordinates: [
-    {
-      id: 2255409681268736,
-      name: 'Welch',
-      subordinates: [
-        {
-          id: 5289006159888384,
-          name: 'Berge',
-          subordinates: [
-            {id: 6477126282772480, name: 'Witting', subordinates: []},
-            {id: 3583093055160320, name: 'Gerhold', subordinates: []},
-            {id: 731703804952576, name: 'Goyette', subordinates: []},
-          ],
-        },
-        {
-          id: 6755638029844480,
-          name: 'Windler',
-          subordinates: [
-            {id: 6734702408892416, name: 'Kris', subordinates: []},
-            {
-              id: 2837393883267072,
-              name: 'MacGyver',
-              subordinates: [],
-            },
-            {
-              id: 1739271736131584,
-              name: 'Dickinson-Shields',
-              subordinates: [],
-            },
-          ],
-        },
-        {
-          id: 8965487518023680,
-          name: 'Langosh',
-          subordinates: [
-            {
-              id: 8821237660778496,
-              name: 'Homenick',
-              subordinates: [],
-            },
-            {id: 367154270568448, name: 'Gorczany', subordinates: []},
-            {
-              id: 8631827960954880,
-              name: 'MacGyver',
-              subordinates: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 752826999373824,
-      name: 'Kuhn',
-      subordinates: [
-        {
-          id: 8360634274021376,
-          name: 'Wiza',
-          subordinates: [
-            {id: 329008319299584, name: 'Berge', subordinates: []},
-            {id: 3980249003982848, name: 'Zulauf', subordinates: []},
-            {id: 8185399719493632, name: 'West', subordinates: []},
-          ],
-        },
-        {
-          id: 4796171983781888,
-          name: 'Bruen',
-          subordinates: [
-            {id: 5974160589193216, name: 'Braun', subordinates: []},
-            {id: 8448128384499712, name: 'Sipes', subordinates: []},
-            {
-              id: 1792728413241344,
-              name: 'Kertzmann',
-              subordinates: [],
-            },
-          ],
-        },
-        {
-          id: 1126636709740544,
-          name: 'Pouros',
-          subordinates: [
-            {id: 3610567862386688, name: 'Kub', subordinates: []},
-            {id: 5847941006753792, name: 'Moen', subordinates: []},
-            {id: 5543482080886784, name: 'Orn', subordinates: []},
-          ],
-        },
-      ],
-    },
-    {
-      id: 4742725043748864,
-      name: 'Durgan',
-      subordinates: [
-        {
-          id: 5387387840495616,
-          name: 'Kovacek',
-          subordinates: [
-            {id: 3116168061648896, name: 'Gerlach', subordinates: []},
-            {id: 8061307072806912, name: 'Kihn', subordinates: []},
-            {
-              id: 1867738721026048,
-              name: 'Nitzsche',
-              subordinates: [],
-            },
-          ],
-        },
-        {
-          id: 3581808895590400,
-          name: 'Heathcote',
-          subordinates: [
-            {id: 114283868323840, name: 'DuBuque', subordinates: []},
-            {id: 8192062828576768, name: 'Rau', subordinates: []},
-            {id: 2473156684021760, name: 'Kling', subordinates: []},
-          ],
-        },
-        {
-          id: 7228172166758400,
-          name: 'Lemke',
-          subordinates: [
-            {id: 634374145966080, name: 'Bernhard', subordinates: []},
-            {id: 1028590613299200, name: 'Steuber', subordinates: []},
-            {id: 4402901417984000, name: 'Volkman', subordinates: []},
-          ],
-        },
-      ],
-    },
-  ],
-}
-
-new ArmyRankingApp(general)
+new ArmyRankingApp()

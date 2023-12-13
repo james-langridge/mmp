@@ -11,6 +11,17 @@
 <body>
     <main>
         <h1 class="heading">Army Ranking App</h1>
+        <div class="data-input">
+            <label for="army-input" class="sr-only">Army data</label>
+            <textarea id="army-input" placeholder="Paste army data here in valid json."></textarea>
+            <div class="input-buttons">
+                <button id="display-army" class="button">Display army</button>
+                <button id="demo-army" class="button">Demo</button>
+                <button id="reset" class="button">Reset</button>
+            </div>
+        </div>
+        <div id="root">
+        </div>
         <div class="footer">
             <div class="buttons">
             <a href="#" title="Scroll to top">
@@ -56,8 +67,6 @@
                 <span id="B">Manager</span>
             </div>
         </div>
-
-        <div id="root"></div>
         <div id="bottom"></div>
     </main>
 </body>
