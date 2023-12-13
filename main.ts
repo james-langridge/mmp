@@ -14,18 +14,36 @@ type MoveType = 'move' | 'undo' | 'redo'
 
 class ArmyRankingApp {
   #general?: Officer
-  #rootElement?: HTMLElement
-  #officerID?: number
-  #newManagerID?: number
-  #prevMoves: (Move | null)[] = [null]
   #moveIndex: number = 0
+  #newManagerID?: number
+  #officerClassname: string
+  #officerID?: number
+  #prevMoves: (Move | null)[] = [null]
+  #resetError?: () => void
+  #rootElementID: string
 
-  constructor() {
-    this.#createButtonEventListeners()
-    this.#renderArmy()
+  constructor(rootElementID: string, officerClassname: string) {
+    this.#officerClassname = officerClassname
+    this.#rootElementID = rootElementID
   }
 
-  #undo() {
+  get officerID() {
+    return this.#officerID
+  }
+
+  get newManagerID() {
+    return this.#newManagerID
+  }
+
+  set general(value: Officer | undefined) {
+    this.#general = value
+  }
+
+  set resetError(cb: () => void) {
+    this.#resetError = cb
+  }
+
+  undo() {
     if (this.#moveIndex < 1) {
       return
     }
@@ -43,10 +61,12 @@ class ArmyRankingApp {
       this.#insertOfficer(move.officer, move.oldManagerID)
 
       this.#moveIndex--
+
+      this.renderArmy()
     }
   }
 
-  #redo() {
+  redo() {
     if (this.#moveIndex >= this.#prevMoves.length - 1) {
       return
     }
@@ -66,31 +86,27 @@ class ArmyRankingApp {
     moveType: MoveType = 'move',
   ) {
     if (!this.#general) {
-      return {success: false}
+      throw new Error('No general!')
     }
 
     if (!officerID || !managerID) {
-      this.#officerID = undefined
-      this.#newManagerID = undefined
-      console.error('Missing ID')
+      this.#resetIDs()
 
-      return {success: false}
+      throw new Error('Missing ID')
     }
+
     if (officerID === this.#general.id) {
-      this.#officerID = undefined
-      this.#newManagerID = undefined
-      console.error(
+      this.#resetIDs()
+
+      throw new Error(
         'You cannot remove the general. Your insubordination has been reported!',
       )
-
-      return {success: false}
     }
-    if (officerID === managerID) {
-      this.#officerID = undefined
-      this.#newManagerID = undefined
-      console.error('officerID must be different to managerID')
 
-      return {success: false}
+    if (officerID === managerID) {
+      this.#resetIDs()
+
+      throw new Error('officerID must be different to managerID')
     }
 
     if (moveType === 'move') {
@@ -104,21 +120,18 @@ class ArmyRankingApp {
     const A = this.#extractOfficer(officerID, moveType)
 
     if (!A) {
-      this.#officerID = undefined
-      this.#newManagerID = undefined
+      this.#resetIDs()
       this.#moveIndex--
-      console.error(`officerId ${officerID} not found!`)
 
-      return {success: false}
+      throw new Error(`officerId ${officerID} not found!`)
     }
 
     this.#insertOfficer(A, managerID)
 
     // Reset the values
-    this.#officerID = undefined
-    this.#newManagerID = undefined
+    this.#resetIDs()
 
-    return {success: true}
+    this.renderArmy()
   }
 
   #extractOfficer(
@@ -127,7 +140,7 @@ class ArmyRankingApp {
     officer: Officer | undefined = this.#general,
   ): Officer | undefined {
     if (!officer || !this.#general) {
-      return undefined
+      throw new Error('No officer subordinates to search.')
     }
 
     // Find the officer in the army by id
@@ -138,7 +151,10 @@ class ArmyRankingApp {
 
         // No-op if trying to move officer to current manager
         if (managerOfA.id === this.#newManagerID) {
-          return undefined
+          this.#resetIDs()
+          this.#moveIndex--
+
+          throw new Error('Officer already reports to this manager.')
         }
 
         // Push the move to the history if this is not an undo/redo
@@ -217,20 +233,22 @@ class ArmyRankingApp {
     return false
   }
 
-  #renderArmy() {
-    const root = document.getElementById('root')
+  renderArmy(general: Officer | undefined = this.#general) {
+    const root = document.getElementById(this.#rootElementID)
 
     if (!root) {
       throw new Error('No root element!')
     }
 
-    const A = document.getElementById('A') as HTMLElement
-    const B = document.getElementById('B') as HTMLElement
+    // FIXME: nice idea but getElementById like this is too coupled to the UI.
+    //  Related html and css also commented out.
+    // const A = document.getElementById('A') as HTMLElement
+    // const B = document.getElementById('B') as HTMLElement
 
-    if (!this.#general) {
+    if (!general) {
       root.innerHTML = ''
-      A.textContent = 'Officer'
-      B.textContent = 'Manager'
+      // A.textContent = 'Officer'
+      // B.textContent = 'Manager'
       this.#prevMoves = [null]
       this.#moveIndex = 0
 
@@ -239,32 +257,39 @@ class ArmyRankingApp {
 
     const main = document.createElement('div')
     main.id = 'main'
+    main.style.flexGrow = '1'
+    main.style.width = '100%'
+    main.style.height = '100%'
+    main.style.display = 'flex'
+    main.style.justifyContent = 'center'
 
     // Create one event listener for clicks on the officer buttons
     main.addEventListener('click', event => {
+      if (this.#resetError) {
+        this.#resetError()
+      }
       const target = event.target as HTMLElement
-      if (target.classList.contains('officer')) {
+      if (target.classList.contains(this.#officerClassname)) {
         if (!this.#officerID || this.#newManagerID) {
           const selectedElements = document.querySelectorAll('.selected')
           selectedElements.forEach(element => {
             element.classList.remove('selected')
           })
           this.#officerID = Number(target.id)
-          A.textContent = target.innerText
-          B.textContent = 'Manager'
+          // A.textContent = target.innerText
+          // B.textContent = 'Manager'
           this.#newManagerID = undefined
           target.classList.add('selected')
         } else if (!this.#newManagerID) {
-          B.textContent = target.innerText
+          // B.textContent = target.innerText
           this.#newManagerID = Number(target.id)
           target.classList.add('selected')
         }
       } else {
         // Reset the values if click away from officers
-        A.textContent = 'Officer'
-        B.textContent = 'Manager'
-        this.#officerID = undefined
-        this.#newManagerID = undefined
+        // A.textContent = 'Officer'
+        // B.textContent = 'Manager'
+        this.#resetIDs()
         const selectedElements = document.querySelectorAll('.selected')
         selectedElements.forEach(element => {
           element.classList.remove('selected')
@@ -272,46 +297,34 @@ class ArmyRankingApp {
       }
     })
 
-    const fragment = document.createDocumentFragment()
-    const rootEl = fragment
+    const mainFragment = document.createDocumentFragment()
+    const mainEl = mainFragment
       .appendChild(main)
       .appendChild(document.createElement('section'))
       .appendChild(document.createElement('ul'))
       .appendChild(document.createElement('li'))
 
-    rootEl.id = String(this.#general.id)
-
-    // Clear the root, which includes the child div with the click event listener
+    // Clear the root, including the main child div with the click event listener
+    // Avoids creating multiple event listeners
     root.innerHTML = ''
-    // Re-append everything
-    root.appendChild(fragment)
+    // Re-append everything to the root
+    root.appendChild(mainFragment)
 
     // Create the general
-    const btn = document.createElement('button')
-    btn.id = String(this.#general.id)
-    btn.innerText = this.#general.name
-    btn.className = 'officer'
-    rootEl.appendChild(btn)
+    const btn = this.#createOfficer(general)
 
-    this.#rootElement = rootEl
+    mainEl.appendChild(btn)
 
-    this.#renderChildElements(this.#general, this.#rootElement)
+    this.#renderChildElements(general, mainEl)
   }
 
-  #renderChildElements(officer: Officer, element?: HTMLElement) {
-    if (!element) {
-      throw new Error('No element to append children to')
-    }
-
+  #renderChildElements(officer: Officer, element: HTMLElement) {
     const list = document.createElement('ul')
     element.appendChild(list)
 
     for (let i = 0; i < officer.subordinates.length; i++) {
       const li = document.createElement('li')
-      const btn = document.createElement('button')
-      btn.id = String(officer.subordinates[i].id)
-      btn.innerText = officer.subordinates[i].name
-      btn.className = 'officer'
+      const btn = this.#createOfficer(officer.subordinates[i])
 
       li.appendChild(btn)
       list.appendChild(li)
@@ -322,71 +335,152 @@ class ArmyRankingApp {
     }
   }
 
-  #createButtonEventListeners() {
-    const moveBtn = document.getElementById('moveBtn') as HTMLButtonElement
-    moveBtn.addEventListener('click', () => {
-      if (!this.#newManagerID) {
-        return
-      }
+  #createOfficer(officer: Officer) {
+    const btn = document.createElement('button')
+    btn.id = String(officer.id)
+    btn.innerText = officer.name
+    btn.className = this.#officerClassname
 
-      const {success} = this.moveOfficer(this.#officerID, this.#newManagerID)
+    return btn
+  }
 
-      if (success) {
-        this.#renderArmy()
-      }
-    })
-
-    const undoBtn = document.getElementById('undoBtn') as HTMLButtonElement
-    undoBtn.addEventListener('click', () => {
-      const A = document.getElementById('A') as HTMLElement
-      const B = document.getElementById('B') as HTMLElement
-      A.textContent = 'Officer'
-      B.textContent = 'Manager'
-      this.#undo()
-      this.#renderArmy()
-    })
-
-    const redoBtn = document.getElementById('redoBtn') as HTMLButtonElement
-    redoBtn.addEventListener('click', () => {
-      this.#redo()
-      this.#renderArmy()
-    })
-
-    const displayArmyBtn = document.getElementById(
-      'display-army',
-    ) as HTMLButtonElement
-    displayArmyBtn.addEventListener('click', () => {
-      const inputText = document.getElementById(
-        'army-input',
-      ) as HTMLTextAreaElement
-
-      this.#general = JSON.parse(inputText.value)
-      this.#renderArmy()
-    })
-
-    const demoArmyBtn = document.getElementById(
-      'demo-army',
-    ) as HTMLButtonElement
-    demoArmyBtn.addEventListener('click', () => {
-      fetch('army-data.json')
-        .then(response => response.json())
-        .then(data => {
-          this.#general = data
-          this.#renderArmy()
-        })
-        .catch(error => console.error('Error:', error))
-    })
-
-    const resetBtn = document.getElementById('reset') as HTMLButtonElement
-    resetBtn.addEventListener('click', () => {
-      const inputText = document.getElementById(
-        'army-input',
-      ) as HTMLTextAreaElement
-      inputText.value = ''
-      this.#general = undefined
-      this.#renderArmy()
-    })
+  #resetIDs() {
+    this.#officerID = undefined
+    this.#newManagerID = undefined
   }
 }
 
-new ArmyRankingApp()
+// Create app instance
+const app = new ArmyRankingApp('root', 'officer')
+app.resetError = resetError
+
+// Set up button event listeners
+// Move button
+const moveBtn = document.getElementById('moveBtn') as HTMLButtonElement
+moveBtn.addEventListener('click', () => {
+  resetError()
+
+  const officerID = app.officerID
+  const newManagerID = app.newManagerID
+
+  if (!newManagerID) {
+    return
+  }
+
+  try {
+    app.moveOfficer(officerID, newManagerID)
+  } catch (error) {
+    handleError(error)
+  }
+})
+
+// Undo button
+const undoBtn = document.getElementById('undoBtn') as HTMLButtonElement
+undoBtn.addEventListener('click', () => {
+  resetError()
+
+  try {
+    app.undo()
+  } catch (error) {
+    handleError(error)
+  }
+})
+
+// Redo button
+const redoBtn = document.getElementById('redoBtn') as HTMLButtonElement
+redoBtn.addEventListener('click', () => {
+  resetError()
+
+  try {
+    app.redo()
+  } catch (error) {
+    handleError(error)
+  }
+})
+
+// Display army button
+const displayArmyBtn = document.getElementById(
+  'display-army',
+) as HTMLButtonElement
+displayArmyBtn.addEventListener('click', () => {
+  const inputText = document.getElementById('army-input') as HTMLTextAreaElement
+  resetError()
+
+  try {
+    app.general = JSON.parse(inputText.value)
+    app.renderArmy()
+  } catch (error) {
+    handleError(error)
+  }
+})
+
+// Demo button
+const demoArmyBtn = document.getElementById('demo-army') as HTMLButtonElement
+demoArmyBtn.addEventListener('click', () => {
+  resetError()
+
+  fetch('army-data.json')
+    .then(response => response.json())
+    .then(data => {
+      app.general = data
+      app.renderArmy()
+    })
+    .catch(error => {
+      handleError(error)
+    })
+})
+
+// Reset button
+const resetBtn = document.getElementById('reset') as HTMLButtonElement
+resetBtn.addEventListener('click', () => {
+  resetError()
+  const inputText = document.getElementById('army-input') as HTMLTextAreaElement
+  inputText.value = ''
+  app.general = undefined
+  try {
+    app.renderArmy()
+  } catch (error) {
+    handleError(error)
+  }
+})
+
+// Error handler
+type ErrorWithMessage = {
+  message: string
+}
+
+const inputError = document.getElementById('error') as HTMLElement
+
+function handleError(error: unknown) {
+  inputError.innerText = getErrorMessage(error)
+  console.error(error)
+}
+
+function resetError() {
+  inputError.innerText = ''
+}
+
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  )
+}
+
+function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
+  if (isErrorWithMessage(maybeError)) return maybeError
+
+  try {
+    return new Error(JSON.stringify(maybeError))
+  } catch {
+    // Fallback in case there's an error stringifying the maybeError
+    // Like with circular references for example.
+    return new Error(String(maybeError))
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  return toErrorWithMessage(error).message
+}
