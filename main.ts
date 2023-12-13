@@ -213,6 +213,8 @@ class ArmyRankingApp {
   #renderArmy() {
     const main = document.createElement('div')
     main.id = 'main'
+    const A = document.getElementById('A') as HTMLElement
+    const B = document.getElementById('B') as HTMLElement
 
     // Create one event listener for clicks on the officer buttons
     main.addEventListener('click', event => {
@@ -224,14 +226,19 @@ class ArmyRankingApp {
             element.classList.remove('selected')
           })
           this.#officerID = Number(target.id)
+          A.textContent = target.innerText
+          B.textContent = 'Manager'
           this.#newManagerID = undefined
           target.classList.add('selected')
         } else if (!this.#newManagerID) {
+          B.textContent = target.innerText
           this.#newManagerID = Number(target.id)
           target.classList.add('selected')
         }
       } else {
         // Reset the values if click away from officers
+        A.textContent = 'Officer'
+        B.textContent = 'Manager'
         this.#officerID = undefined
         this.#newManagerID = undefined
         const selectedElements = document.querySelectorAll('.selected')
@@ -313,6 +320,10 @@ class ArmyRankingApp {
 
     const undoBtn = document.getElementById('undoBtn') as HTMLButtonElement
     undoBtn.addEventListener('click', () => {
+      const A = document.getElementById('A') as HTMLElement
+      const B = document.getElementById('B') as HTMLElement
+      A.textContent = 'Officer'
+      B.textContent = 'Manager'
       this.#undo()
       this.#renderArmy()
     })

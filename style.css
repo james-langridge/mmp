@@ -8,6 +8,14 @@ body {
     min-height: 100vh;
 }
 
+.heading {
+    font-weight: 800;
+    font-size: max(40px, min(5vw, 76px));
+    line-height: 1;
+    letter-spacing: -0.05em;
+    position: relative;
+}
+
 main {
     display: flex;
     flex-direction: column;
@@ -31,6 +39,7 @@ h1 {
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --radius: 0.5rem;
+    scroll-behavior: smooth;
 }
 
 .officer {
@@ -40,14 +49,20 @@ h1 {
     white-space: nowrap;
     border: none;
     border-radius: var(--radius);
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 8px 15px;
+    font-size: 0.8rem;
     font-weight: 500;
-    line-height: 1.5;
+    line-height: 1.75;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
     background-color: transparent;
     color: hsl(var(--foreground));
+
+    @media screen and (min-width: 640px) {
+        padding: 10px 20px;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
 
     &:hover {
         background-color: hsl(var(--accent));
@@ -76,6 +91,7 @@ h1 {
     width: 100%;
     display: flex;
     flex-direction: column;
+    padding-bottom: 10rem;
 }
 
 #main {
@@ -86,8 +102,40 @@ h1 {
     justify-content: center;
 }
 
+.footer {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    column-gap: 0.5rem;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    background-color: white;
+    border-top: 1px solid hsl(var(--input));
+
+    @media screen and (min-width: 640px) {
+        column-gap: 2rem;
+    }
+}
+
 .buttons {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    background-color: white;
+    margin-bottom: 1rem;
+
+    @media screen and (min-width: 640px) {
+        gap: 2rem;
+    }
 }
 
 .button {
@@ -96,15 +144,21 @@ h1 {
     justify-content: center;
     white-space: nowrap;
     border-radius: var(--radius);
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 8px 15px;
+    font-size: 0.75rem;
     font-weight: 500;
-    line-height: 1.5;
+    line-height: 1.25;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
     background-color: transparent;
     color: hsl(var(--foreground));
     border: 1px solid hsl(var(--input));
+
+    @media screen and (min-width: 640px) {
+        padding: 10px 20px;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
 
     &:hover {
         background-color: hsl(var(--accent));
@@ -120,4 +174,15 @@ h1 {
         pointer-events: none;
         opacity: 0.5;
     }
+}
+
+.officers {
+    display: flex;
+    align-items: center;
+}
+
+#chevron-right {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
 }

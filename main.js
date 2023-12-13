@@ -155,6 +155,8 @@ _ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakM
 }, _ArmyRankingApp_renderArmy = function _ArmyRankingApp_renderArmy() {
     const main = document.createElement('div');
     main.id = 'main';
+    const A = document.getElementById('A');
+    const B = document.getElementById('B');
     // Create one event listener for clicks on the officer buttons
     main.addEventListener('click', event => {
         const target = event.target;
@@ -165,16 +167,21 @@ _ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakM
                     element.classList.remove('selected');
                 });
                 __classPrivateFieldSet(this, _ArmyRankingApp_officerID, Number(target.id), "f");
+                A.textContent = target.innerText;
+                B.textContent = 'Manager';
                 __classPrivateFieldSet(this, _ArmyRankingApp_newManagerID, undefined, "f");
                 target.classList.add('selected');
             }
             else if (!__classPrivateFieldGet(this, _ArmyRankingApp_newManagerID, "f")) {
+                B.textContent = target.innerText;
                 __classPrivateFieldSet(this, _ArmyRankingApp_newManagerID, Number(target.id), "f");
                 target.classList.add('selected');
             }
         }
         else {
             // Reset the values if click away from officers
+            A.textContent = 'Officer';
+            B.textContent = 'Manager';
             __classPrivateFieldSet(this, _ArmyRankingApp_officerID, undefined, "f");
             __classPrivateFieldSet(this, _ArmyRankingApp_newManagerID, undefined, "f");
             const selectedElements = document.querySelectorAll('.selected');
@@ -237,6 +244,10 @@ _ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakM
     });
     const undoBtn = document.getElementById('undoBtn');
     undoBtn.addEventListener('click', () => {
+        const A = document.getElementById('A');
+        const B = document.getElementById('B');
+        A.textContent = 'Officer';
+        B.textContent = 'Manager';
         __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_undo).call(this);
         __classPrivateFieldGet(this, _ArmyRankingApp_instances, "m", _ArmyRankingApp_renderArmy).call(this);
     });
