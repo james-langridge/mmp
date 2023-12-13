@@ -103,9 +103,8 @@ _ArmyRankingApp_general = new WeakMap(), _ArmyRankingApp_rootElement = new WeakM
         if (officer.subordinates[i].id === officerID) {
             const A = officer.subordinates[i];
             const managerOfA = officer;
-            // No-op if trying to move 1st level officer to general
-            if (managerOfA.id === __classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id &&
-                __classPrivateFieldGet(this, _ArmyRankingApp_newManagerID, "f") === __classPrivateFieldGet(this, _ArmyRankingApp_general, "f").id) {
+            // No-op if trying to move officer to current manager
+            if (managerOfA.id === __classPrivateFieldGet(this, _ArmyRankingApp_newManagerID, "f")) {
                 return undefined;
             }
             // Push the move to the history if this is not an undo/redo

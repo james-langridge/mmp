@@ -136,11 +136,8 @@ class ArmyRankingApp {
         const A = officer.subordinates[i]
         const managerOfA = officer
 
-        // No-op if trying to move 1st level officer to general
-        if (
-          managerOfA.id === this.#general.id &&
-          this.#newManagerID === this.#general.id
-        ) {
+        // No-op if trying to move officer to current manager
+        if (managerOfA.id === this.#newManagerID) {
           return undefined
         }
 
