@@ -102,6 +102,12 @@ ul {
     }
 }
 
+.officer.selected {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border: none;
+}
+
 .footer {
     padding: 1rem;
     display: flex;
